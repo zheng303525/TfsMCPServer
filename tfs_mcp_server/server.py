@@ -520,4 +520,9 @@ class TFSMcpServer:
             port: Port number for http/sse transport
             **kwargs: Additional arguments for the server
         """
-        self.mcp.run(transport=transport, host=host, port=port, **kwargs) 
+        if transport == "stdio":
+            # stdio transport doesn't accept host/port parameters
+            self.mcp.run(transport=transport, **kwargs)
+        else:
+            # http/sse transports need host/port parameters
+            self.mcp.run(transport=transport, host=host, port=port, **kwargs) 
