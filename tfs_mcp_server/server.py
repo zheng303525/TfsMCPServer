@@ -51,7 +51,8 @@ class TFSMcpServer:
             paths: List[str],
             lock_type: Optional[str] = None,
             recursive: bool = False,
-            file_type: Optional[str] = None
+            file_type: Optional[str] = None,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Checkout files from TFS for editing.
             
@@ -60,12 +61,18 @@ class TFSMcpServer:
                 lock_type: Lock type (none, checkin, checkout)
                 recursive: Recursively checkout files in folders
                 file_type: File type specification
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
                 Dictionary containing operation result
             """
             await ctx.info(f"Checking out {len(paths)} path(s)...")
+            
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
             
             options = TFSCheckoutOptions(
                 paths=paths,
@@ -74,7 +81,7 @@ class TFSMcpServer:
                 type=file_type
             )
             
-            result = await self.tfs_client.checkout_files(options)
+            result = await client.checkout_files(options)
             
             if result.success:
                 await ctx.info(f"Successfully checked out files: {result.output}")
@@ -96,7 +103,8 @@ class TFSMcpServer:
             recursive: bool = False,
             associate: Optional[List[int]] = None,
             resolve: Optional[List[int]] = None,
-            override_reason: Optional[str] = None
+            override_reason: Optional[str] = None,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Checkin files to TFS.
             
@@ -107,12 +115,18 @@ class TFSMcpServer:
                 associate: Work item IDs to associate with this checkin
                 resolve: Work item IDs to resolve with this checkin  
                 override_reason: Reason for overriding policy failures
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
                 Dictionary containing operation result
             """
             await ctx.info(f"Checking in {len(paths)} path(s) with comment: {comment}")
+            
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
             
             options = TFSCheckinOptions(
                 paths=paths,
@@ -123,7 +137,7 @@ class TFSMcpServer:
                 override=override_reason
             )
             
-            result = await self.tfs_client.checkin_files(options)
+            result = await client.checkin_files(options)
             
             if result.success:
                 await ctx.info(f"Successfully checked in files: {result.output}")
@@ -141,13 +155,15 @@ class TFSMcpServer:
         async def tf_add(
             ctx: Context,
             paths: List[str],
-            recursive: bool = False
+            recursive: bool = False,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Add files to TFS source control.
             
             Args:
                 paths: List of file or folder paths to add
                 recursive: Recursively add files in folders
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
@@ -155,7 +171,12 @@ class TFSMcpServer:
             """
             await ctx.info(f"Adding {len(paths)} path(s) to TFS...")
             
-            result = await self.tfs_client.add_files(paths, recursive)
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
+            
+            result = await client.add_files(paths, recursive)
             
             if result.success:
                 await ctx.info(f"Successfully added files: {result.output}")
@@ -173,13 +194,15 @@ class TFSMcpServer:
         async def tf_delete(
             ctx: Context,
             paths: List[str],
-            recursive: bool = False
+            recursive: bool = False,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Delete files from TFS source control.
             
             Args:
                 paths: List of file or folder paths to delete
                 recursive: Recursively delete files in folders
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
@@ -187,7 +210,12 @@ class TFSMcpServer:
             """
             await ctx.info(f"Deleting {len(paths)} path(s) from TFS...")
             
-            result = await self.tfs_client.delete_files(paths, recursive)
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
+            
+            result = await client.delete_files(paths, recursive)
             
             if result.success:
                 await ctx.info(f"Successfully deleted files: {result.output}")
@@ -205,13 +233,15 @@ class TFSMcpServer:
         async def tf_rename(
             ctx: Context,
             old_path: str,
-            new_path: str
+            new_path: str,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Rename a file in TFS source control.
             
             Args:
                 old_path: Current path of the file
                 new_path: New path for the file
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
@@ -219,7 +249,12 @@ class TFSMcpServer:
             """
             await ctx.info(f"Renaming '{old_path}' to '{new_path}'...")
             
-            result = await self.tfs_client.rename_file(old_path, new_path)
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
+            
+            result = await client.rename_file(old_path, new_path)
             
             if result.success:
                 await ctx.info(f"Successfully renamed file: {result.output}")
@@ -237,13 +272,15 @@ class TFSMcpServer:
         async def tf_undo(
             ctx: Context,
             paths: List[str],
-            recursive: bool = False
+            recursive: bool = False,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Undo pending changes in TFS.
             
             Args:
                 paths: List of file or folder paths to undo changes for
                 recursive: Recursively undo changes in folders
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
@@ -251,7 +288,12 @@ class TFSMcpServer:
             """
             await ctx.info(f"Undoing changes for {len(paths)} path(s)...")
             
-            result = await self.tfs_client.undo_changes(paths, recursive)
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
+            
+            result = await client.undo_changes(paths, recursive)
             
             if result.success:
                 await ctx.info(f"Successfully undid changes: {result.output}")
@@ -269,13 +311,15 @@ class TFSMcpServer:
         async def tf_status(
             ctx: Context,
             paths: Optional[List[str]] = None,
-            recursive: bool = False
+            recursive: bool = False,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Get status of files in TFS.
             
             Args:
                 paths: List of paths to check status for (defaults to current directory)
                 recursive: Recursively check status in folders
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
@@ -284,7 +328,12 @@ class TFSMcpServer:
             path_info = f" for {len(paths)} path(s)" if paths else " for current directory"
             await ctx.info(f"Getting TFS status{path_info}...")
             
-            result = await self.tfs_client.get_status(paths, recursive)
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
+            
+            result = await client.get_status(paths, recursive)
             
             if result.success:
                 await ctx.info("Successfully retrieved status information")
@@ -303,7 +352,8 @@ class TFSMcpServer:
             ctx: Context,
             paths: Optional[List[str]] = None,
             recursive: bool = False,
-            force: bool = False
+            force: bool = False,
+            working_directory: Optional[str] = None
         ) -> Dict[str, Any]:
             """Get latest version of files from TFS.
             
@@ -311,6 +361,7 @@ class TFSMcpServer:
                 paths: List of paths to get latest for (defaults to current directory)
                 recursive: Recursively get latest in folders
                 force: Force overwrite local changes
+                working_directory: Working directory for path resolution (if not provided, uses server default)
                 ctx: MCP context
                 
             Returns:
@@ -319,7 +370,12 @@ class TFSMcpServer:
             path_info = f" for {len(paths)} path(s)" if paths else " for current directory"
             await ctx.info(f"Getting latest version{path_info}...")
             
-            result = await self.tfs_client.get_latest(paths, recursive, force)
+            # Create a temporary client with the specified working directory if provided
+            client = self.tfs_client
+            if working_directory:
+                client = TFSClient(self.tfs_client.tf_exe_path, working_directory)
+            
+            result = await client.get_latest(paths, recursive, force)
             
             if result.success:
                 await ctx.info(f"Successfully retrieved latest version: {result.output}")
@@ -495,6 +551,7 @@ class TFSMcpServer:
                 JSON string containing status information.
             """
             try:
+                # Note: Path normalization is handled in TFSClient.get_status()
                 result = await self.tfs_client.get_status([path], recursive=False)
                 return json.dumps({
                     "path": path,

@@ -38,6 +38,32 @@ class TFSClient:
         self.tf_exe_path = tf_exe_path or "tf"
         self.working_directory = working_directory or os.getcwd()
 
+    def _normalize_path(self, path: str) -> str:
+        """Convert relative paths to absolute paths.
+        
+        Args:
+            path: File or directory path (relative or absolute).
+            
+        Returns:
+            Absolute path.
+        """
+        if os.path.isabs(path):
+            return os.path.normpath(path)
+        
+        # Convert relative path to absolute based on working directory
+        return os.path.normpath(os.path.join(self.working_directory, path))
+
+    def _normalize_paths(self, paths: List[str]) -> List[str]:
+        """Convert a list of relative paths to absolute paths.
+        
+        Args:
+            paths: List of file or directory paths.
+            
+        Returns:
+            List of absolute paths.
+        """
+        return [self._normalize_path(path) for path in paths]
+
     async def _execute_command(
         self, 
         command: List[str], 
@@ -133,7 +159,7 @@ class TFSClient:
         if options.type:
             command.extend(["/type:" + options.type])
             
-        command.extend(options.paths)
+        command.extend(self._normalize_paths(options.paths))
         
         return await self._execute_command(command)
 
@@ -164,7 +190,7 @@ class TFSClient:
         if options.override:
             command.extend(["/override:" + options.override])
             
-        command.extend(options.paths)
+        command.extend(self._normalize_paths(options.paths))
         
         return await self._execute_command(command)
 
@@ -183,7 +209,7 @@ class TFSClient:
         if recursive:
             command.append("/recursive")
             
-        command.extend(paths)
+        command.extend(self._normalize_paths(paths))
         
         return await self._execute_command(command)
 
@@ -202,7 +228,7 @@ class TFSClient:
         if recursive:
             command.append("/recursive")
             
-        command.extend(paths)
+        command.extend(self._normalize_paths(paths))
         
         return await self._execute_command(command)
 
@@ -216,7 +242,7 @@ class TFSClient:
         Returns:
             Command execution result.
         """
-        command = ["rename", old_path, new_path]
+        command = ["rename", self._normalize_path(old_path), self._normalize_path(new_path)]
         return await self._execute_command(command)
 
     async def undo_changes(self, paths: List[str], recursive: bool = False) -> TFSCommandResult:
@@ -234,7 +260,7 @@ class TFSClient:
         if recursive:
             command.append("/recursive")
             
-        command.extend(paths)
+        command.extend(self._normalize_paths(paths))
         
         return await self._execute_command(command)
 
@@ -258,9 +284,9 @@ class TFSClient:
             command.append("/recursive")
             
         if paths:
-            command.extend(paths)
+            command.extend(self._normalize_paths(paths))
         else:
-            command.append(".")
+            command.append(self._normalize_path("."))
             
         return await self._execute_command(command)
 
@@ -289,9 +315,9 @@ class TFSClient:
             command.append("/force")
             
         if paths:
-            command.extend(paths)
+            command.extend(self._normalize_paths(paths))
         else:
-            command.append(".")
+            command.append(self._normalize_path("."))
             
         return await self._execute_command(command)
 
@@ -304,7 +330,7 @@ class TFSClient:
         Returns:
             Command execution result.
         """
-        command = ["branch", branch_info.source_path, branch_info.target_path]
+        command = ["branch", self._normalize_path(branch_info.source_path), self._normalize_path(branch_info.target_path)]
         
         if branch_info.version:
             command.extend(["/version:" + branch_info.version])
@@ -320,7 +346,7 @@ class TFSClient:
         Returns:
             Command execution result.
         """
-        command = ["merge", options.source, options.target]
+        command = ["merge", self._normalize_path(options.source), self._normalize_path(options.target)]
         
         if options.version:
             command.extend(["/version:" + options.version])
@@ -345,7 +371,7 @@ class TFSClient:
         Returns:
             Command execution result.
         """
-        command = ["history", options.path]
+        command = ["history", self._normalize_path(options.path)]
         
         if options.recursive:
             command.append("/recursive")

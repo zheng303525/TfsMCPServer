@@ -165,6 +165,57 @@ Add the MCP configuration to your VSCode settings:
 
 After configuration, you should see the TFS MCP Server appear in your VSCode MCP servers list, providing access to all TFS operations through the MCP interface.
 
+## Path Handling
+
+**Important**: All TFS operations automatically convert relative paths to absolute paths based on the server's configured working directory. This ensures that:
+
+- Relative paths are resolved correctly regardless of where the MCP server is running
+- Operations target the intended files/directories in your workspace  
+- Commands work consistently across different environments
+
+### Working Directory Configuration
+
+Set the working directory when starting the server:
+
+```bash
+# Using command line
+tfs-mcp-server --working-directory "C:\Source\MyProject"
+
+# Using environment variable
+export TFS_WORKING_DIR="/path/to/workspace"
+tfs-mcp-server
+```
+
+### Path Examples
+
+```python
+# These relative paths:
+paths = ["src/main.py", "docs/readme.txt", "."]
+
+# Are automatically converted to absolute paths:
+# ["C:\Source\MyProject\src\main.py", "C:\Source\MyProject\docs\readme.txt", "C:\Source\MyProject"]
+```
+
+### VS Code Integration
+
+When using VS Code with the MCP client, you can pass the current workspace directory to ensure relative paths are resolved correctly:
+
+```json
+{
+  "tool_name": "tf_checkout", 
+  "arguments": {
+    "paths": ["src/main.py", "README.md"],
+    "working_directory": "/path/to/vscode/workspace"
+  }
+}
+```
+
+**All TFS tools support the optional `working_directory` parameter** to override the server's default working directory. This ensures that:
+
+- VS Code can pass its current workspace directory for each operation
+- Relative paths are resolved based on the correct workspace root
+- Multiple projects can be managed from a single MCP server instance
+
 ## Available Tools
 
 The TFS MCP Server provides the following tools for TFS operations:
@@ -173,44 +224,44 @@ The TFS MCP Server provides the following tools for TFS operations:
 
 #### `tf_checkout`
 Checkout files from TFS for editing.
-- **Parameters**: `paths` (list), `lock_type` (optional), `recursive` (bool), `file_type` (optional)
+- **Parameters**: `paths` (list), `lock_type` (optional), `recursive` (bool), `file_type` (optional), `working_directory` (optional)
 - **Example**: Checkout files for editing with exclusive lock
 
 #### `tf_checkin`  
 Checkin files to TFS with comments and work item associations.
-- **Parameters**: `paths` (list), `comment` (string), `recursive` (bool), `associate` (list), `resolve` (list), `override_reason` (optional)
+- **Parameters**: `paths` (list), `comment` (string), `recursive` (bool), `associate` (list), `resolve` (list), `override_reason` (optional), `working_directory` (optional)
 - **Example**: Checkin changes with descriptive comment
 
 #### `tf_add`
 Add new files to TFS source control.
-- **Parameters**: `paths` (list), `recursive` (bool)
+- **Parameters**: `paths` (list), `recursive` (bool), `working_directory` (optional)
 - **Example**: Add new files to version control
 
 #### `tf_delete`
 Delete files from TFS source control.
-- **Parameters**: `paths` (list), `recursive` (bool)  
+- **Parameters**: `paths` (list), `recursive` (bool), `working_directory` (optional)
 - **Example**: Remove files from version control
 
 #### `tf_rename`
 Rename files in TFS source control.
-- **Parameters**: `old_path` (string), `new_path` (string)
+- **Parameters**: `old_path` (string), `new_path` (string), `working_directory` (optional)
 - **Example**: Rename a file while maintaining history
 
 #### `tf_undo`
 Undo pending changes in TFS.
-- **Parameters**: `paths` (list), `recursive` (bool)
+- **Parameters**: `paths` (list), `recursive` (bool), `working_directory` (optional)
 - **Example**: Revert uncommitted changes
 
 ### Information Operations
 
 #### `tf_status`
 Get the status of files in TFS.
-- **Parameters**: `paths` (optional list), `recursive` (bool)
+- **Parameters**: `paths` (optional list), `recursive` (bool), `working_directory` (optional)
 - **Example**: Check which files have pending changes
 
 #### `tf_get_latest`
 Get the latest version of files from TFS.
-- **Parameters**: `paths` (optional list), `recursive` (bool), `force` (bool)
+- **Parameters**: `paths` (optional list), `recursive` (bool), `force` (bool), `working_directory` (optional)
 - **Example**: Update local files to latest server version
 
 #### `tf_history`
