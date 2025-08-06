@@ -92,6 +92,79 @@ server.run()
 server.run(transport="http", host="127.0.0.1", port=8000)
 ```
 
+## VSCode MCP Integration
+
+The TFS MCP Server can be integrated with VSCode using the Model Context Protocol. Below are two configuration methods for different transport types.
+
+### Method 1: HTTP Transport Configuration
+
+For HTTP transport, configure VSCode MCP settings to use the correct endpoint and headers:
+
+```json
+{
+  "mcpServers": {
+    "tfs-mcp-server": {
+      "transport": "http",
+      "url": "http://127.0.0.1:8000/mcp",
+      "headers": {
+        "Accept": "application/json, text/event-stream"
+      }
+    }
+  }
+}
+```
+
+Start the server with HTTP transport:
+
+```bash
+tfs-mcp-server --transport http --host 127.0.0.1 --port 8000
+```
+
+### Method 2: STDIO Transport Configuration (Recommended)
+
+For local development, STDIO transport is the most stable and compatible option:
+
+```json
+{
+  "mcpServers": {
+    "tfs-mcp-server": {
+      "transport": "stdio",
+      "command": "python",
+      "args": ["-m", "tfs_mcp_server.main"],
+      "cwd": "C:\\Users\\User\\dev\\TFSMcp"
+    }
+  }
+}
+```
+
+Or if you have the package installed globally:
+
+```json
+{
+  "mcpServers": {
+    "tfs-mcp-server": {
+      "transport": "stdio",
+      "command": "tfs-mcp-server",
+      "cwd": "/path/to/your/tfs/workspace"
+    }
+  }
+}
+```
+
+**Note**: Update the `cwd` path to point to your actual TFS workspace directory.
+
+### Configuration Location
+
+Add the MCP configuration to your VSCode settings:
+
+1. Open VSCode Settings (Ctrl+,)
+2. Search for "MCP" or find the MCP extension settings
+3. Add the configuration JSON to the appropriate settings field
+
+### Verification
+
+After configuration, you should see the TFS MCP Server appear in your VSCode MCP servers list, providing access to all TFS operations through the MCP interface.
+
 ## Available Tools
 
 The TFS MCP Server provides the following tools for TFS operations:
